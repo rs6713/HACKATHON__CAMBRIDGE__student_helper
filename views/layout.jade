@@ -1,0 +1,86 @@
+doctype html
+html(ng-app="cambridgehack")
+  head
+    title= title
+
+    meta(http-equiv="X-UA-Compatible", content="IE=edge")
+    //disable zooming capabilities
+    meta(name="viewport", content="width=device-width,initial-scale=1, maximum-scale=1, user-scalable=no")
+    meta(charset="utf-8")
+
+    //Jquery JS and CSS
+    script(src="https://code.jquery.com/jquery-3.2.1.min.js",integrity="sha256-hwg4gsxgFZhOsEEamdOYGBf13FyQuiTwlAQgxVSNgt4=",crossorigin="anonymous")
+    script(src="https://code.jquery.com/ui/1.12.1/jquery-ui.js")
+    link(rel="stylesheet", href="https://code.jquery.com/ui/1.10.4/themes/black-tie/jquery-ui.css")
+    
+    //Angular Material style sheet
+    link(rel="stylesheet", href="https://ajax.googleapis.com/ajax/libs/angular_material/1.1.0/angular-material.min.css")
+
+    //angular
+    script(src="https://ajax.googleapis.com/ajax/libs/angularjs/1.5.6/angular.min.js")
+    script(src="https://cdnjs.cloudflare.com/ajax/libs/angular-ui-bootstrap/0.14.3/ui-bootstrap-tpls.js")
+    script(src="https://cdnjs.cloudflare.com/ajax/libs/angular-ui-bootstrap/0.14.3/ui-bootstrap-tpls.js")   
+    
+    //Font awesome
+    script(src="https://use.fontawesome.com/1079ce90fa.js") 
+
+
+    script(src="https://ajax.googleapis.com/ajax/libs/angularjs/1.5.5/angular-animate.min.js")
+    script(src="https://ajax.googleapis.com/ajax/libs/angularjs/1.5.5/angular-aria.min.js")
+    script(src="https://ajax.googleapis.com/ajax/libs/angularjs/1.5.5/angular-messages.min.js")
+    //-Angular Material Library 
+    script(src="https://ajax.googleapis.com/ajax/libs/angular_material/1.1.0/angular-material.min.js")
+
+    //Include the Quill library
+    link( href="https://cdn.quilljs.com/1.3.4/quill.snow.css", rel="stylesheet")
+    script(src="https://cdn.quilljs.com/1.3.4/quill.js")
+
+    script(type="text/javascript", src="/javascripts/index.js")
+    script(src='/application.js')
+    link(rel='stylesheet', href='/stylesheets/style.css')
+    
+  
+  
+  body(ng-controller="mainController")
+    #entry
+      h2 Paper Topic
+      input(ng-model="paperTopic", placeholder="Child psychology") 
+      h2 Hours Till Deadline
+      input(ng-model="hours", placeholder="4") 
+      h2 Number of Characters
+      input(ng-model="wordTotal", placeholder="2000")  
+      button(ng-click="loadMainPage()") Let's Go!
+    #main
+      #header
+        | Time Left: {{timeLeftHr}} hrs {{timeLeftMin}} mins {{timeLeftSec}} secs
+      #mainbody
+        #paper
+          #editor
+        #info
+          #progress
+            | Character Count: {{wordCount}} / {{wordTotal}}
+          #data
+            #options
+              #sections
+                div
+                  h2 Sections
+              #search 
+                div
+                  h2 Search
+                  input(ng-model="subtopic")
+                  button#subtopicbutton(ng-click="getSubtop()") Go
+
+            #sectionPick
+              div 
+                h2(ng-click="getInt()") Intros
+              div 
+                h2(ng-click="getConc()") Conclusions
+            #results
+              div(ng-repeat="item in results")
+                | Title: {{item.title}}
+                | Date: {{item.date}}
+                | {{item.data}}
+
+
+
+
