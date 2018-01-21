@@ -1,9 +1,9 @@
 var faceAbsent=0;
 var faceThreshold=1;
 var faceTime=10000;
-var emotTime=10000;
+var emotTime=5000;
 var dangerThreshold=2;
-var dangerTime=10000;
+var dangerTime=5000;
 
 var mainApplicationModuleName= 'cambridgehack';
 var mainApp= angular.module(mainApplicationModuleName, ['ui.bootstrap', 'ngMaterial', 'ngMessages', 'chart.js']);
@@ -140,7 +140,7 @@ mainApp.factory('getConcs', ['$http', function($http){
 
 
 
-mainApp.controller('mainController',['$scope', '$timeout', 'storePapers', 'getIntros', 'getConcs' , 'getTopics','payingAttention', 'getImages','getEmots' ,'$mdToast',function($scope, $timeout, storePapers, getIntros, getConcs,getTopics, payingAttention, getImages, getEmots, $mdToast){
+mainApp.controller('mainController',['$scope', '$timeout', 'storePapers', 'getIntros', 'getConcs' , 'getTopics','payingAttention', 'getImages','getEmots' ,'$mdToast' , "$mdDialog",function($scope, $timeout, storePapers, getIntros, getConcs,getTopics, payingAttention, getImages, getEmots, $mdToast, $mdDialog){
     var self=this;
     $scope.paperTopic="";
     $scope.wordTotal=0;
@@ -256,6 +256,24 @@ mainApp.controller('mainController',['$scope', '$timeout', 'storePapers', 'getIn
             console.log("unsuccesfful face analysis");
         });
     }
+
+    var callAlert=function(alertType,str){
+        
+            // Appending dialog to document.body to cover sidenav in docs app
+            // Modal dialogs should fully cover application
+            // to prevent interaction outside of dialog
+            $mdDialog.show(
+              $mdDialog.alert()
+                .parent(angular.element(document.querySelector('body')))
+                .clickOutsideToClose(true)
+                .title(alertType)
+                .textContent(str)
+                .ariaLabel('Alert Dialog Demo')
+                .ok('Got it!')
+                
+            );
+        
+    };
     
 
     var faceCheck= function(){
@@ -276,7 +294,8 @@ mainApp.controller('mainController',['$scope', '$timeout', 'storePapers', 'getIn
             }
             //Away for 30secs
             if(faceAbsent>= faceThreshold){
-                alert("GET BACK TO WORK!!");
+                callAlert("Attention Alert", "You're not focused! Get back to work!");
+               
             }
 
         }).error(function(error, status){
@@ -336,6 +355,8 @@ mainApp.controller('mainController',['$scope', '$timeout', 'storePapers', 'getIn
     var faceChecker, emotChecker;
     var safetyChecker;
 
+
+
     var safetyCheck=function(){
         var danger=["anger","contempt","disgust","fear","sadness"];
         var total=0;
@@ -354,10 +375,10 @@ mainApp.controller('mainController',['$scope', '$timeout', 'storePapers', 'getIn
             }
         }
         if(total==dangerThreshold){
-            $("#mainbody").css({"filter":"blur(5px)"});
-            $("#analytics").css({"filter":"blur(5px)"});
-            var str="You seem to be experiencing quite a bit of "+ individ+ "studies show this is counter productive. Maybe take a break?" ;
-            alert(str );
+            //$("#mainbody").css({"filter":"blur(5px)"});
+            //$("#analytics").css({"filter":"blur(5px)"});
+            var str="You seem to be experiencing quite a bit of "+ individ+ " studies show this is counter productive. Maybe take a break?" ;
+            callAlert("Emotion Alert", str );
         }
     }
 
