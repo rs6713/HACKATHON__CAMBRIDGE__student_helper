@@ -54,6 +54,7 @@ html(ng-app="cambridgehack")
   
   
   body(ng-controller="mainController")
+    
     #entry
       img(src="images/firepaper.png")
       h2 Paper Topic
@@ -67,14 +68,30 @@ html(ng-app="cambridgehack")
       #header
         #timer
           | Time Left: {{timeLeftHr}} hrs {{timeLeftMin}} mins {{timeLeftSec}} secs
-        md-switch( ng-model="extreme", aria-label="extreme")
-          |Extreme Mode
 
+        md-switch( ng-model="extreme", aria-label="extreme")
+          | TrackMe
+        md-switch( ng-model="safety", aria-label="Safety")
+          | Safety
+
+        #mainnav Main
+        #analyticsnav Analytics
+
+
+
+      #analytics
+        div(style="height:30%;width:100%;")
+          canvas(id="line", class="chart chart-line", chart-data="emotions", chart-labels="emotX", chart-series="emotAvail", chart-options="analyzeOptions")
       #mainbody
         #paper
           #editor
         #info
           #progress
+            #trackers
+              span(style="color:white;float:left;", ng-if="trackStatus") Currently On Track 
+              span(style="color:red;float:left;", ng-if="!trackStatus") Behind schedule
+              br
+              span Finish: {{projectFinish[0]}} hrs {{projectFinish[1]}} mins {{projectFinish[2]}} secs
             div(style="height:100px;width:100px;display:inline-block;float:right;")
               canvas(id="doughnut", class="chart chart-doughnut" ,chart-data="wordTracking", chart-labels="wordLabels", chart-colors="wordColors")
           
@@ -111,6 +128,7 @@ html(ng-app="cambridgehack")
                   | {{item.data}}
     video
     canvas#canvas
+    canvas#canvas2
     #hello
 
 

@@ -1,6 +1,9 @@
 var faceAbsent=0;
-var faceThreshold=3;
+var faceThreshold=1;
 var faceTime=10000;
+var emotTime=10000;
+var dangerThreshold=2;
+var dangerTime=10000;
 
 var mainApplicationModuleName= 'cambridgehack';
 var mainApp= angular.module(mainApplicationModuleName, ['ui.bootstrap', 'ngMaterial', 'ngMessages', 'chart.js']);
@@ -79,7 +82,7 @@ var makeblob = function (dataURL) {
 mainApp.factory('payingAttention', ['$http',  function($http){
     var papers={};
     papers.getState=function(img){
-        console.log(img);
+        //console.log(img);
         
         var req = {
             method: 'POST',
@@ -97,6 +100,27 @@ mainApp.factory('payingAttention', ['$http',  function($http){
 }]);
 
 
+
+mainApp.factory('getEmots', ['$http', function($http){
+    var papers={};
+    papers.getState=function(img){
+        //console.log(img);
+        
+        var req = {
+            method: 'POST',
+            url: 'https://westus.api.cognitive.microsoft.com/emotion/v1.0/recognize',
+             headers:{
+                "Ocp-Apim-Subscription-Key": "56b17fa6212e4099ba3e1411c16023e8",
+                "Content-Type": "application/octet-stream"
+            },
+            data: makeblob(img),
+            processData: false
+        };
+        return $http(req);        
+    }
+    return papers;
+
+}]);
 
 mainApp.factory('getIntros', ['$http', function($http){
     var paper={};
@@ -116,12 +140,13 @@ mainApp.factory('getConcs', ['$http', function($http){
 
 
 
-mainApp.controller('mainController',['$scope', '$timeout', 'storePapers', 'getIntros', 'getConcs' , 'getTopics','payingAttention', 'getImages','$mdToast',function($scope, $timeout, storePapers, getIntros, getConcs,getTopics, payingAttention, getImages,$mdToast){
+mainApp.controller('mainController',['$scope', '$timeout', 'storePapers', 'getIntros', 'getConcs' , 'getTopics','payingAttention', 'getImages','getEmots' ,'$mdToast',function($scope, $timeout, storePapers, getIntros, getConcs,getTopics, payingAttention, getImages, getEmots, $mdToast){
     var self=this;
     $scope.paperTopic="";
     $scope.wordTotal=0;
     $scope.wordCount=0;
     $scope.hours=0;
+    $scope.projectFinish=[0,0,0];
     
     $scope.timeLeftHr=0;
     $scope.timeLeftMin=0;
@@ -135,6 +160,31 @@ mainApp.controller('mainController',['$scope', '$timeout', 'storePapers', 'getIn
     $scope.wordLabels = ["Chars Down", "Chars To Go"];
     $scope.wordColors= [ "#3E66B2", "#B3D2FF"]
     $scope.wordTracking=[];
+
+    $scope.emotions=[[],[],[],[],[],[],[],[],[]];
+    $scope.emotX=[];
+    $scope.emotAvail=["anger","contempt","disgust","fear", "happiness", "neutral","sadness","surprise", "wordCount"];
+
+    $scope.analyzeOptions = {legend: {display: true}};
+
+    $scope.trackStatus=true;
+    var trackStatusFunct=function(){
+
+        
+        
+        var d=new Date().getTime();
+
+        var hrs=$scope.hours*60*60*1000;
+
+        $scope.projectFinish[0]= Math.floor(((d-($scope.deadline-hrs)) * ($scope.wordTotal/$scope.wordTracking[0])% (1000 * 60 * 60 * 24))/(60*60*1000));
+        $scope.projectFinish[1]= Math.floor(((d-($scope.deadline-hrs)) * ($scope.wordTotal/$scope.wordTracking[0])% (1000 * 60 * 60 ))/(60*1000));
+        $scope.projectFinish[2]= Math.floor(((d-($scope.deadline-hrs)) * ($scope.wordTotal/$scope.wordTracking[0])% (1000 * 60 ))/(1000));
+
+        return (($scope.wordTracking[0]/$scope.wordTotal) >= ((hrs-($scope.deadline-d)) / hrs) );
+        
+    }
+    
+
 
     $scope.getSubtop=function(){
         getTopics.getTopics($scope.subtopic).success(function(data){
@@ -166,7 +216,46 @@ mainApp.controller('mainController',['$scope', '$timeout', 'storePapers', 'getIn
     }
 
     
+    var emotionCheck=function(){
+        context.drawImage(video,0,0, 160, 120);
+        var image = canvas.toDataURL("image/png");
 
+        getEmots.getState(image).success(function(data){
+            //console.log("Emotion successfully recieved", data);
+            if(data.length>0){
+                var emotions=data[0].scores;
+                var top=0;
+                var temp="";
+                for(var key in emotions){
+                    if(emotions[key]>top){
+                        top=emotions[key];
+                        temp=key;
+                    }
+                }
+                console.log("Emotion is", temp);
+
+                for(var i=0; i< $scope.emotAvail.length-1; i++){
+                    if(temp==$scope.emotAvail[i]){
+                        $scope.emotions[i].push(1);
+                    }else{
+                        $scope.emotions[i].push(0);
+                    }
+                }
+                $scope.emotions[$scope.emotions.length-1].push((quill.getLength()-1)/$scope.wordTotal);
+                if($scope.emotX.length==0){
+                    $scope.emotX.push(1);
+                }else{
+                    $scope.emotX.push($scope.emotX[$scope.emotX.length-1]+1);
+                }
+            }
+            //$scope.emotions.push(temp);
+
+        }).error(function(err, status){
+            //go back to start with error message
+            console.log(err);
+            console.log("unsuccesfful face analysis");
+        });
+    }
     
 
     var faceCheck= function(){
@@ -176,16 +265,18 @@ mainApp.controller('mainController',['$scope', '$timeout', 'storePapers', 'getIn
         payingAttention.getState(image).success(function(data){
             //turn off loading circle, change page
 
-            console.log("Face successfully evaluated", data.Predictions);
+            //console.log("Face successfully evaluated", data.Predictions);
             if( (data.Predictions[0].Tag=="on" && data.Predictions[0].Probability< data.Predictions[1].Probability) ||
                 (data.Predictions[1].Tag=="on" && data.Predictions[1].Probability< data.Predictions[0].Probability) ){
                     faceAbsent+=1;
+                    console.log("Not paying attention");
             }else{
                 faceAbsent=0;
+                console.log("Paying attention");
             }
             //Away for 30secs
             if(faceAbsent>= faceThreshold){
-                alert("GET BACK TO WORK");
+                alert("GET BACK TO WORK!!");
             }
 
         }).error(function(error, status){
@@ -214,6 +305,7 @@ mainApp.controller('mainController',['$scope', '$timeout', 'storePapers', 'getIn
         $scope.deadline=new Date().getTime()+ $scope.hours*60*60*1000;
         window.setInterval(updateTimeLeft, 1000);
         window.setInterval(updateWordCount, 1000);
+        window.setInterval(function(){$scope.trackStatus=trackStatusFunct()},1000);
 
         storePapers.storeData($scope.paperTopic).success(function(data){
             //turn off loading circle, change page
@@ -241,13 +333,57 @@ mainApp.controller('mainController',['$scope', '$timeout', 'storePapers', 'getIn
 
 
     };
-    var faceChecker;
+    var faceChecker, emotChecker;
+    var safetyChecker;
+
+    var safetyCheck=function(){
+        var danger=["anger","contempt","disgust","fear","sadness"];
+        var total=0;
+        var individ="";
+        var individVal=0;
+        for(var e=0; e<danger.length; e++){
+            var hist= $scope.emotions[$scope.emotAvail.indexOf(danger[e])];
+            var temp=0;
+            for(var i=hist.length-dangerThreshold-1; i< hist.length-1; i++){
+                total+=hist[i];
+                temp+=hist[i];
+            } 
+            if(temp>individVal){
+                individVal=temp;
+                individ=danger[e];
+            }
+        }
+        if(total==dangerThreshold){
+            $("#mainbody").css({"filter":"blur(5px)"});
+            $("#analytics").css({"filter":"blur(5px)"});
+            var str="You seem to be experiencing quite a bit of "+ individ+ "studies show this is counter productive. Maybe take a break?" ;
+            alert(str );
+        }
+    }
+
+    $scope.$watch('[safety]', function(newValues, oldValues, $scope) {
+
+        var safe=newValues[0];
+        if(safe){
+            safetyChecker=window.setInterval(safetyCheck, dangerTime);
+        }else{
+            clearInterval(safetyChecker);
+        }
+
+
+    });
+
     $scope.$watch('[extreme]', function(newValues, oldValues, $scope) {
         var ex=newValues[0];
+
         if(ex){
+            emotChecker=window.setInterval(emotionCheck, emotTime);
             faceChecker= window.setInterval( faceCheck, faceTime);
         }else{
             clearInterval(faceChecker);
+            clearInterval(emotChecker);
         }
+
+
     });
 }]);

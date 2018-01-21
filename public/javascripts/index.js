@@ -2,6 +2,7 @@ var quill;
 var video;
 var canvas;
 var context;
+var context2;
 var errorCallback = function(e) {
     console.log('Reeeejected', e);
   };
@@ -80,9 +81,20 @@ $(document).ready(function(){
         $("#results").css({"display":"block"});        
     });
 
+    $("#analyticsnav").click(function(){
+        $("#mainbody").css({"display":"none"});
+        $("#analytics").css({"display":"block"});
+    });
+    $("#mainnav").click(function(){
+        $("#mainbody").css({"display":"block"});
+        $("#analytics").css({"display":"none"});
+    });
+
     video = document.querySelector('video');
     canvas = document.getElementById('canvas');
+    canvas2 = document.getElementById('canvas2');
     context = canvas.getContext('2d');
+    context2 = canvas2.getContext('2d');
 
     
 });
