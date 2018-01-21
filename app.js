@@ -210,18 +210,21 @@ app.get('/concsGet', function(req, res) {
 
 app.get('/search', function(req, res){
   var item=req.query.data;
+  item=item.toLowerCase();
+  
   var results=[];
-  console.log("Searching");
+  console.log("Searching for matches", item);
   for(var i=0; i<papers.length; i++){
     var paper=papers[i].data;
     for(var pg=0; pg< paper.length; pg++){
       for(var title in paper[pg]){
-        if(title.indexOf(item)!=0){
+        var temp=title.toLowerCase();
+        if(temp.indexOf(item)!=-1){
           var section=paper[pg][title];
           if(paper.length>pg+1 && paper[pg+1][title]!=undefined){
             section+=paper[pg+1][title];
           }
-          results.push({title: papers[i].title, date: papers[i].date, data: section});
+          results.push({title: papers[i].title, header: title, date: papers[i].date, data: section});
         }
       }
     }

@@ -41,7 +41,20 @@ $(document).ready(function(){
         $("#options").css({"display":"none"});
         
         $("#sectionPick").css({"display":"block"});
+        $("#data i").css({"display":"block"});
         
+    });
+
+    $("#data i").click(function(){
+       
+            $("#options").css({"display":"block"});
+            $("#sectionPick").css({"display":"none"});
+            $("#data i").css({"display":"none"}); 
+            $("#results").css({"display":"none"});            
+
+    });
+    $("#subtopicbutton").click(function(){
+        $("#data i").css({"display":"block"});
     });
 
     $('#dataimg div:last-child').click(function(){
