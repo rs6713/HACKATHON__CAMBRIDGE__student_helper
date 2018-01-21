@@ -7,11 +7,28 @@ var bodyParser = require('body-parser');
 var rp = require('request-promise');
 var fs=require('fs');
 var PDFParser=require("pdf2json");
-
-var index = require('./routes/index');
+var https = require('https');
+var path = require('path'); 
+//var index = require('./routes/index');
 
 
 var app = express();
+// view engine setup
+app.use(express.static(path.join(__dirname, 'public')));
+app.set('views', path.join(__dirname, 'views'));
+app.set('view engine', 'jade');
+
+app.get('/', function(req, res) {
+  res.render('layout', { title: 'Express' });
+});
+
+// uncomment after placing your favicon in /public
+//app.use(favicon(path.join(__dirname, 'public', 'favicon.ico')));
+app.use(logger('dev'));
+app.use(bodyParser.json());
+app.use(bodyParser.urlencoded({ extended: false }));
+
+
 
 var papers=[];
 
@@ -49,17 +66,19 @@ var bingPaperSearch={
   }
 };
 
-// view engine setup
-app.set('views', path.join(__dirname, 'views'));
-app.set('view engine', 'jade');
+var faceApi={
+  method:'POST',
+  uri:'https://southcentralus.api.cognitive.microsoft.com/customvision/v1.1/Prediction/a95df3c0-6435-4aec-8435-394030f768db/image?iterationId=ac40aacc-9ec6-48f7-b717-faa4f8dfc8b8',
+  headers:{
+    "Prediction-Key": "e52d2e49eada4002b1f46a8ab890b564",
+    "Content-Type": "application/octet-stream"
+  },
+  body: {
+    data: ''
+  }
+};
 
-// uncomment after placing your favicon in /public
-//app.use(favicon(path.join(__dirname, 'public', 'favicon.ico')));
-app.use(logger('dev'));
-app.use(bodyParser.json());
-app.use(bodyParser.urlencoded({ extended: false }));
-app.use(cookieParser());
-app.use(express.static(path.join(__dirname, 'public')));
+
 
 
 var getDocument=function(plain){
@@ -112,8 +131,97 @@ var getDocument=function(plain){
   return document;
 }
 
+
+
+
+
+app.get('/introsGet', function(req, res) {
+  console.log("intros!!!!!!!!!");
+  
+  var results=[];
+  for(var i=0; i< papers.length; i++){
+    var done=0;
+    var paper=papers[i].data;
+    
+    for(var pg=0; pg<paper.length; pg++){
+      var page=paper[pg];
+      for (var key in page) {
+        console.log(page[key]);
+        if(page[key].length>200){
+          results.push({title: papers[i].title, date: papers[i].date, data: page[key]});
+          done=1;
+          break;
+        }
+      }
+      if(done){break;}
+
+    }
+  }
+  res.send(results);
+});
+
+app.get('/concsGet', function(req, res) {
+  console.log("getting concs");
+  var results=[];
+  for(var i=0; i< papers.length; i++){
+    var done=0;
+    var paper=papers[i].data;
+    for(var pg=0; pg<paper.length; pg++){
+      var page=paper[pg];
+      var arr= page.keys();
+      arr.reverse();
+      for (var key in page) {
+        if(page[key].length>200){
+          results.push({title: papers[i].title, date: papers[i].date, data: page[key]});
+          break;
+        }
+      }
+      if(done){break;}
+    }
+  }
+  res.send(results);
+});
+
+app.get('/search', function(req, res){
+  var item=req.body.data;
+  var results=[];
+  console.log("Searching");
+  for(var i=0; i<papers.length; i++){
+    var paper=papers[i].data;
+    for(var pg=0; pg< paper.length; pg++){
+      for(var title in paper[pg]){
+        if(title.indexOf(item)!=0){
+          var section=paper[pg][title];
+          if(paper.length>pg+1 && paper[pg+1][title]!=undefined){
+            section+=paper[pg+1][title];
+          }
+          results.push({title: papers[i].title, date: papers[i].date, data: section});
+        }
+      }
+    }
+  }
+  res.send(results);
+
+});
+
+app.use('/payingAttention', function(req, res){
+  console.log("attempting to send face data");
+  var img=req.body.data;
+  faceApi.body.data=img;
+  rp(faceApi).then(function(data){
+    console.log("Got faceapi response, data", data);
+  }).catch(function (err) {
+    // Crawling failed or Cheerio choked...
+    console.log("failed to get face api response", err);
+    res.send(err);
+  });  
+
+});
+
+
+app.use('/storePapers', function(req, res) {
 //get first pdf found, download, parse it and store
-var downloadPaper=function(title, year, res){
+var downloadPaper=function(title, year){
   bingPaperSearch.qs.q=title+" "+year;
   rp(bingPaperSearch)
   .then(function (data) {
@@ -173,7 +281,7 @@ var downloadPaper=function(title, year, res){
   });  
 }
 
-var getListPapers=function(res){
+var getListPapers=function(){
   rp(paperNamesSearch)
   .then(function (data) {
       // Process html like you would with jQuery...
@@ -181,7 +289,7 @@ var getListPapers=function(res){
       var papers2=data.entities;
       //for evert entry find, download its pdf and convert it
       for(var i=0; i< papers2.length; i++){
-        downloadPaper(papers2[i].Ti, papers2[i].Y, res);
+        downloadPaper(papers2[i].Ti, papers2[i].Y);
       }
       res.send("YAAASSSS");
   })
@@ -191,84 +299,7 @@ var getListPapers=function(res){
       res.send(err);
   });
 
-};
-
-app.get('/intros', function (req, res, next) {
-  console.log("hello world");
-  next();
-});
-
-app.get('/intros', function(req, res) {
-  console.log("intros!!!!!!!!!");
-  
-  var results=[];
-  for(var i=0; i< papers.length; i++){
-    var done=0;
-    var paper=papers[i].data;
-    
-    for(var pg=0; pg<paper.length; pg++){
-      var page=paper[pg];
-      for (var key in page) {
-        console.log(page[key]);
-        if(page[key].length>200){
-          results.push({title: papers[i].title, date: papers[i].date, data: page[key]});
-          done=1;
-          break;
-        }
-      }
-      if(done){break;}
-
-    }
-  }
-  res.send(results);
-});
-
-app.get('/concs', function(req, res) {
-  console.log("getting concs");
-  var results=[];
-  for(var i=0; i< papers.length; i++){
-    var done=0;
-    var paper=papers[i].data;
-    for(var pg=0; pg<paper.length; pg++){
-      var page=paper[pg];
-      var arr= page.keys();
-      arr.reverse();
-      for (var key in page) {
-        if(page[key].length>200){
-          results.push({title: papers[i].title, date: papers[i].date, data: page[key]});
-          break;
-        }
-      }
-      if(done){break;}
-    }
-  }
-  res.send(results);
-});
-
-app.get('/search', function(req, res){
-  var item=req.body.data;
-  var results=[];
-  console.log("Searching");
-  for(var i=0; i<papers.length; i++){
-    var paper=papers[i].data;
-    for(var pg=0; pg< paper.length; pg++){
-      for(var title in paper[pg]){
-        if(title.indexOf(item)!=0){
-          var section=paper[pg][title];
-          if(paper.length>pg+1 && paper[pg+1][title]!=undefined){
-            section+=paper[pg+1][title];
-          }
-          results.push({title: papers[i].title, date: papers[i].date, data: section});
-        }
-      }
-    }
-  }
-  res.send(results);
-
-});
-
-app.use('/storePapers', function(req, res) {
-  
+};  
   var paperTitle=req.body.data;
   commandSearch.qs.query=paperTitle;
 
@@ -280,7 +311,7 @@ app.use('/storePapers', function(req, res) {
           data=JSON.parse(data);
           paperNamesSearch.qs.expr=data.interpretations[0].rules[0].output.value;
           console.log("Searching using term ",paperNamesSearch.qs.expr )
-          getListPapers(res);
+          getListPapers();
       })
       .catch(function (err) {
           // Crawling failed or Cheerio choked...
@@ -293,10 +324,12 @@ app.use('/storePapers', function(req, res) {
 
 
 
+//app.use('/', index);
 
 
-app.use('/', index);
-app.use('/users', users);
+
+
+
 
 // catch 404 and forward to error handler
 app.use(function(req, res, next) {
@@ -313,7 +346,29 @@ app.use(function(err, req, res, next) {
 
   // render the error page
   res.status(err.status || 500);
-  res.render('error');
+  //res.render('error');
 });
 
-module.exports = app;
+
+var options = {
+  key: fs.readFileSync(path.resolve('keycert/key.pem')),
+  cert: fs.readFileSync(path.resolve('keycert/cert.pem'))
+};
+/**
+ * Get port from environment and store in Express.
+ */
+
+var port = '3000';
+app.set('port', port);
+
+/**
+ * Create HTTP server.
+ */
+
+var server = https.createServer(options, app);
+
+/**
+ * Listen on provided port, on all network interfaces.
+ */
+
+server.listen(port);

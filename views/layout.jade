@@ -31,6 +31,10 @@ html(ng-app="cambridgehack")
     //-Angular Material Library 
     script(src="https://ajax.googleapis.com/ajax/libs/angular_material/1.1.0/angular-material.min.js")
 
+    //graphs
+    script(src="../node_modules/chart.js/Chart.min.js")
+    script(src="../node_modules/angular-chart.js/dist/angular-chart.min.js")
+
     //Include the Quill library
     link( href="https://cdn.quilljs.com/1.3.4/quill.snow.css", rel="stylesheet")
     script(src="https://cdn.quilljs.com/1.3.4/quill.js")
@@ -52,13 +56,19 @@ html(ng-app="cambridgehack")
       button(ng-click="loadMainPage()") Let's Go!
     #main
       #header
-        | Time Left: {{timeLeftHr}} hrs {{timeLeftMin}} mins {{timeLeftSec}} secs
+        #timer
+          | Time Left: {{timeLeftHr}} hrs {{timeLeftMin}} mins {{timeLeftSec}} secs
+        md-switch( ng-model="extreme", aria-label="extreme")
+          |Extreme Mode
+
       #mainbody
         #paper
           #editor
         #info
           #progress
-            | Character Count: {{wordCount}} / {{wordTotal}}
+            canvas(id="doughnut", class="chart chart-doughnut" ,chart-data="wordTracking", chart-labels="wordLabels")
+          
+            //| Character Count: {{wordCount}} / {{wordTotal}}
           #data
             #options
               #sections
@@ -76,10 +86,15 @@ html(ng-app="cambridgehack")
               div 
                 h2(ng-click="getConc()") Conclusions
             #results
-              div(ng-repeat="item in results")
-                | Title: {{item.title}}
-                | Date: {{item.date}}
-                | {{item.data}}
+              div#res(ng-repeat="item in results")
+                div#resulthead
+                  div Title: {{item.title}}
+                  div Date: {{item.date}}
+                div#resultbody
+                  | {{item.data}}
+    video
+    canvas#canvas
+    #hello
 
 
 
