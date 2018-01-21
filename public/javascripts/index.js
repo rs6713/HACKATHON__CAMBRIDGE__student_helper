@@ -26,6 +26,8 @@ function convertCanvasToImage(canvas) {
     
 
 $(document).ready(function(){
+    $("#mainbody #info #progress canvas#doughnut.chart.chart-doughnut.ng-isolate-scope").css({ "width": "100px", "height": "100px"});
+
     $("#entry button").click(function(){
         $("#main").css({"display": "block"});
         $("#entry").css({"display": "none"});
@@ -40,6 +42,20 @@ $(document).ready(function(){
         
         $("#sectionPick").css({"display":"block"});
         
+    });
+
+    $('#dataimg div:last-child').click(function(){
+        $('#dataimg div:last-child').css({"border-bottom":"2px solid white"});
+        $('#dataimg div:first-child').css({"border-bottom":"2px solid #222222"});
+        $('#images').css({"display":"block"});
+        $('#data').css({"display":"none"});
+
+    });
+    $('#dataimg div:first-child').click(function(){
+        $('#dataimg div:first-child').css({"border-bottom":"2px solid white"});
+        $('#dataimg div:last-child').css({"border-bottom":"2px solid #222222"});
+        $('#images').css({"display":"none"});
+        $('#data').css({"display":"block"});
     });
 
     $("#subtopicbutton").click(function(){

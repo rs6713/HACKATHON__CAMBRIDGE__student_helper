@@ -19,7 +19,12 @@ mainApp.factory('getPapers', ['$http',  function($http){
 mainApp.factory('getTopics', ['$http',  function($http){
     var papers={};
     papers.getTopics=function(url){
-       return $http.get('/search',{data:url});  
+
+       return  $http({
+            url: '/search', 
+            method: "GET",
+            params: {data: url}
+        }); 
     }
     return papers;
 }]);
@@ -32,6 +37,21 @@ mainApp.factory('storePapers', ['$http',  function($http){
     }
     return papers;
 }]);
+
+
+mainApp.factory('getImages', ['$http',  function($http){
+    var papers={};
+    papers.getImgList=function(urlTopic){
+        console.log("image search param",urlTopic);
+        return  $http({
+            url: '/getImages', 
+            method: "GET",
+            params: {data: urlTopic}
+         }); 
+    }
+    return papers;
+}]);
+
 
 var makeblob = function (dataURL) {
     var BASE64_MARKER = ';base64,';
@@ -96,7 +116,7 @@ mainApp.factory('getConcs', ['$http', function($http){
 
 
 
-mainApp.controller('mainController',['$scope', '$timeout', 'storePapers', 'getIntros', 'getConcs' , 'getTopics','payingAttention','$mdToast',function($scope, $timeout, storePapers, getIntros, getConcs,getTopics, payingAttention, $mdToast){
+mainApp.controller('mainController',['$scope', '$timeout', 'storePapers', 'getIntros', 'getConcs' , 'getTopics','payingAttention', 'getImages','$mdToast',function($scope, $timeout, storePapers, getIntros, getConcs,getTopics, payingAttention, getImages,$mdToast){
     var self=this;
     $scope.paperTopic="";
     $scope.wordTotal=0;
@@ -110,8 +130,10 @@ mainApp.controller('mainController',['$scope', '$timeout', 'storePapers', 'getIn
     $scope.results=[];
     $scope.subtopic="";
     $scope.extreme=false;
+    $scope.images=[];
 
     $scope.wordLabels = ["Chars Down", "Chars To Go"];
+    $scope.wordColors= [ "#3E66B2", "#B3D2FF"]
     $scope.wordTracking=[];
 
     $scope.getSubtop=function(){
@@ -196,11 +218,27 @@ mainApp.controller('mainController',['$scope', '$timeout', 'storePapers', 'getIn
         storePapers.storeData($scope.paperTopic).success(function(data){
             //turn off loading circle, change page
             console.log("Papers successfully accessed");
+
+            getImages.getImgList($scope.paperTopic).success(function(data){
+                //turn off loading circle, change page
+                console.log("Images successfull received", data);
+                var imgs=data.value;
+                for(var i=0; i<imgs.length; i++){
+                    $scope.images.push(imgs[i].contentUrl);
+                }
+            }).error(function(error, status){
+                //go back to start with error message
+                console.log(error);
+                console.log("unsuccesfful");
+            });
+
         }).error(function(error, status){
             //go back to start with error message
             console.log(error);
             console.log("unsuccesfful");
         });
+
+
 
     };
     var faceChecker;

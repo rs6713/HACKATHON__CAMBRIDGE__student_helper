@@ -60,6 +60,7 @@ body {
     #main #mainbody{
       height:94%;
       width:100%;
+      position:relative;
     }
       #mainbody #paper{
         height:100%;
@@ -88,24 +89,66 @@ body {
       }
         #mainbody #info #progress{
           width:100%;
-          height:6%;
+          height:16%;
           background-color:#FFA595;
           
           box-sizing:border-box;
           text-align:right;
           padding:1em 1em;
+          position:relative;
           
         }
+        #mainbody #info #progress canvas#doughnut.chart.chart-doughnut.ng-isolate-scope{
+          height:3em;
+          width:3em;
+        }
+        #mainbody  #dataimg{
+          height:4%;
+          width:100%;
+          background-color:#222222;
+          color:white;
+          vertical-align:middle;
+          line-height:2;
+        }
+          #dataimg div:first-child{
+            border-bottom:2px solid white;
+          }
+          #dataimg div:last-child{
+            border-bottom:2px solid #222222;
+          }
+
+          #mainbody  #dataimg div{
+            width:50%;
+            text-align:center;
+            height:100%;
+            display:inline-block;
+            cursor:pointer;
+          }
         #mainbody #info #data{
           width:100%;
-          height:94%;
+          height:80%;
           background-color:#3E66B2;
           color:white;
         }
+          #images{
+            height:100%;
+            width:100%;
+            display:none;
+            box-sizing:border-box;
+            padding:0em 10%;
+            overflow-y:scroll;
+            background-color:#3E66B2;
+          }
+            #images img{
+              width:100%;
+              margin-top:1em;
+            }
+
           #data #options{
             height:100%;
             width:100%;
           }
+
             #data #options #sections{
               height:50%;
               width:100%;
@@ -161,17 +204,19 @@ body {
             height:100%;
             width:100%;
             display:none;
+            overflow-y: scroll;
           }
           #data #results #res{
             border-radius: 1em;
             background-color:rgb(223, 223, 223);
-            margin:0 5% 1em 5%;
+            margin:1em 5% 0em 5%;
             width:90%;
           }
           #data #results #res #resulthead{
             padding: 1em;
             background-color:rgb(179, 179, 179);
             font-weight:bold;
+            border-radius: 1em 1em 0 0;
           }
           #data #results #res #resultbody{
             padding:1em;

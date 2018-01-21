@@ -66,6 +66,18 @@ var bingPaperSearch={
   }
 };
 
+var bingImageSearch={
+  method:'GET',
+  uri: 'https://api.cognitive.microsoft.com/bing/v7.0/images/search',
+  headers:{
+      "Ocp-Apim-Subscription-Key" : "8d08226f7d9f4a23ac329be6c1085897"
+  },
+  qs:{
+      q:"", 
+      count: 10
+  }
+};
+
 var faceApi={
   method:'POST',
   uri:'https://southcentralus.api.cognitive.microsoft.com/customvision/v1.1/Prediction/a95df3c0-6435-4aec-8435-394030f768db/image?iterationId=ac40aacc-9ec6-48f7-b717-faa4f8dfc8b8',
@@ -160,6 +172,20 @@ app.get('/introsGet', function(req, res) {
   res.send(results);
 });
 
+app.get('/getImages', function(req, res){
+  bingImageSearch.qs.q=req.query.data;
+  console.log(req.query.data, req.params);
+  console.log("bingimagesearch",bingImageSearch);
+  rp(bingImageSearch).then(function(data){
+    console.log("Got faceapi response, data", data);
+    res.send(data);
+  }).catch(function (err) {
+    // Crawling failed or Cheerio choked...
+    console.log("failed to get face api response", err);
+    res.send(err);
+  });  
+});
+
 app.get('/concsGet', function(req, res) {
   console.log("getting concs");
   var results=[];
@@ -183,7 +209,7 @@ app.get('/concsGet', function(req, res) {
 });
 
 app.get('/search', function(req, res){
-  var item=req.body.data;
+  var item=req.query.data;
   var results=[];
   console.log("Searching");
   for(var i=0; i<papers.length; i++){
