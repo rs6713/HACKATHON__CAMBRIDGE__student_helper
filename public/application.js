@@ -1,9 +1,9 @@
 var faceAbsent=0;
 var faceThreshold=1;
-var faceTime=10000;
-var emotTime=5000;
-var dangerThreshold=2;
-var dangerTime=5000;
+var faceTime=3000;
+var emotTime=4000;
+var dangerThreshold=1;
+var dangerTime=3000;
 
 var mainApplicationModuleName= 'cambridgehack';
 var mainApp= angular.module(mainApplicationModuleName, ['ui.bootstrap', 'ngMaterial', 'ngMessages', 'chart.js']);
@@ -218,10 +218,11 @@ mainApp.controller('mainController',['$scope', '$timeout', 'storePapers', 'getIn
     
     var emotionCheck=function(){
         context.drawImage(video,0,0, 160, 120);
-        var image = canvas.toDataURL("image/png");
+        var image = canvas.toDataURL("image/png").replace("image/png", "image/octet-stream");
+        //var image = canvas.toDataURL("image/png");
 
         getEmots.getState(image).success(function(data){
-            //console.log("Emotion successfully recieved", data);
+            console.log("Emotion successfully recieved", data);
             if(data.length>0){
                 var emotions=data[0].scores;
                 var top=0;
@@ -242,6 +243,7 @@ mainApp.controller('mainController',['$scope', '$timeout', 'storePapers', 'getIn
                     }
                 }
                 $scope.emotions[$scope.emotions.length-1].push((quill.getLength()-1)/$scope.wordTotal);
+                //graph x axis
                 if($scope.emotX.length==0){
                     $scope.emotX.push(1);
                 }else{
@@ -273,7 +275,7 @@ mainApp.controller('mainController',['$scope', '$timeout', 'storePapers', 'getIn
                 
             );
         
-    };
+    }
     
 
     var faceCheck= function(){
@@ -283,9 +285,9 @@ mainApp.controller('mainController',['$scope', '$timeout', 'storePapers', 'getIn
         payingAttention.getState(image).success(function(data){
             //turn off loading circle, change page
 
-            //console.log("Face successfully evaluated", data.Predictions);
-            if( (data.Predictions[0].Tag=="on" && data.Predictions[0].Probability< data.Predictions[1].Probability) ||
-                (data.Predictions[1].Tag=="on" && data.Predictions[1].Probability< data.Predictions[0].Probability) ){
+            console.log("Face successfully evaluated", data.Predictions);
+            if( (data.Predictions[0].Tag=="on" && (data.Predictions[0].Probability< data.Predictions[1].Probability || data.Predictions[0].Probability<0.2)) ||
+                (data.Predictions[1].Tag=="on" && ((data.Predictions[1].Probability< data.Predictions[0].Probability) || data.Predictions[1].Probability<0.2)) ){
                     faceAbsent+=1;
                     console.log("Not paying attention");
             }else{
@@ -294,6 +296,7 @@ mainApp.controller('mainController',['$scope', '$timeout', 'storePapers', 'getIn
             }
             //Away for 30secs
             if(faceAbsent>= faceThreshold){
+                
                 callAlert("Attention Alert", "You're not focused! Get back to work!");
                
             }
@@ -374,7 +377,7 @@ mainApp.controller('mainController',['$scope', '$timeout', 'storePapers', 'getIn
                 individ=danger[e];
             }
         }
-        if(total==dangerThreshold){
+        if(total>=dangerThreshold){
             //$("#mainbody").css({"filter":"blur(5px)"});
             //$("#analytics").css({"filter":"blur(5px)"});
             var str="You seem to be experiencing quite a bit of "+ individ+ " studies show this is counter productive. Maybe take a break?" ;
