@@ -155,6 +155,7 @@ mainApp.controller('mainController',['$scope', '$timeout', 'storePapers', 'getIn
     $scope.results=[];
     $scope.subtopic="";
     $scope.extreme=false;
+    $scope.alerty=false;
     $scope.images=[];
 
     $scope.wordLabels = ["Chars Down", "Chars To Go"];
@@ -286,13 +287,14 @@ mainApp.controller('mainController',['$scope', '$timeout', 'storePapers', 'getIn
             //turn off loading circle, change page
 
             console.log("Face successfully evaluated", data.Predictions);
-            if( (data.Predictions[0].Tag=="on" && (data.Predictions[0].Probability< data.Predictions[1].Probability || data.Predictions[0].Probability<0.2)) ||
-                (data.Predictions[1].Tag=="on" && ((data.Predictions[1].Probability< data.Predictions[0].Probability) || data.Predictions[1].Probability<0.2)) ){
-                    faceAbsent+=1;
-                    console.log("Not paying attention");
+            if( (data.Predictions[0].Tag=="on" && ( (data.Predictions[1].Probability+0.1)< data.Predictions[0].Probability )) ||
+                (data.Predictions[1].Tag=="on" && (( (data.Predictions[0].Probability +0.1)< data.Predictions[1].Probability) )) ){
+                    
+                    faceAbsent=0;
+                    console.log("Paying attention");
             }else{
-                faceAbsent=0;
-                console.log("Paying attention");
+                faceAbsent+=1;
+                console.log("Not paying attention");
             }
             //Away for 30secs
             if(faceAbsent>= faceThreshold){
@@ -357,6 +359,7 @@ mainApp.controller('mainController',['$scope', '$timeout', 'storePapers', 'getIn
     };
     var faceChecker, emotChecker;
     var safetyChecker;
+    
 
 
 
@@ -385,6 +388,19 @@ mainApp.controller('mainController',['$scope', '$timeout', 'storePapers', 'getIn
         }
     }
 
+    $scope.$watch('[alerty]', function(newValues, oldValues, $scope) {
+        var ex=newValues[0];
+        if(ex){
+           
+            faceChecker= window.setInterval( faceCheck, faceTime);
+        }else{
+            clearInterval(faceChecker);
+            
+        }
+        
+        
+            });
+
     $scope.$watch('[safety]', function(newValues, oldValues, $scope) {
 
         var safe=newValues[0];
@@ -402,9 +418,9 @@ mainApp.controller('mainController',['$scope', '$timeout', 'storePapers', 'getIn
 
         if(ex){
             emotChecker=window.setInterval(emotionCheck, emotTime);
-            faceChecker= window.setInterval( faceCheck, faceTime);
+          
         }else{
-            clearInterval(faceChecker);
+            
             clearInterval(emotChecker);
         }
 
